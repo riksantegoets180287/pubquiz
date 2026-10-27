@@ -110,9 +110,14 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
-          <p className="text-sm text-slate-400"> Laden...</p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center shadow-lg">
+            <Sparkles className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Loader2 className="w-5 h-5 text-indigo-400 animate-spin" />
+            <p className="text-sm text-slate-400">PubQuiz Master Pro laden...</p>
+          </div>
         </div>
       </div>
     );
@@ -358,7 +363,57 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onSignIn, onSignUp, error, setE
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </AuthProvider>
   );
+}
+
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; message: string }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, message: '' };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, message: error.message };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('App crash:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-6">
+          <div className="max-w-md text-center">
+            <div className="w-12 h-12 bg-rose-950/60 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-rose-900">
+              <AlertCircle className="w-7 h-7 text-rose-400" />
+            </div>
+            <h1 className="text-lg font-bold text-white mb-2">
+              Er ging iets mis
+            </h1>
+            <p className="text-xs text-slate-400 mb-1">
+              De app liep op een onverwachte fout.
+            </p>
+            <p className="text-xs text-rose-300 mb-4 font-mono break-all">
+              {this.state.message}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl cursor-pointer"
+            >
+              Pagina vernieuwen
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
