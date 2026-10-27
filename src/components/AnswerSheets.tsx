@@ -23,7 +23,7 @@ export const AnswerSheets: React.FC<AnswerSheetsProps> = ({
   onBackToEditor,
 }) => {
   const [sheetType, setSheetType] = useState<SheetType>('participants');
-  const [selectedRoundId, setSelectedRoundId] = useState<number | 'all'>('all');
+  const [selectedRoundId, setSelectedRoundId] = useState<string>('all');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const roundsToRender =
@@ -263,7 +263,7 @@ export const AnswerSheets: React.FC<AnswerSheetsProps> = ({
               value={selectedRoundId}
               onChange={(e) =>
                 setSelectedRoundId(
-                  e.target.value === 'all' ? 'all' : parseInt(e.target.value, 10)
+                  e.target.value === 'all' ? 'all' : e.target.value
                 )
               }
               className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white"

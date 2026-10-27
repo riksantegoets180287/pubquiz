@@ -1,101 +1,51 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  User,
-  signInWithPopup,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-} from 'firebase/auth';
-import { auth, googleAuthProvider } from '../lib/firebase.ts';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabase.ts';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
-  getAuthHeaders: () => Record<string, string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        try {
-          const idToken = await currentUser.getIdToken();
-          setToken(idToken);
-          // Sync with database
-          await fetch('/api/auth/sync', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${idToken}`,
-            },
-          });
-        } catch (err) {
-          console.error('Fout bij synchroniseren van gebruiker:', err);
-        }
-      } else {
-        setToken(null);
-      }
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
-    try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
-      const idToken = await result.user.getIdToken();
-      setToken(idToken);
-      await fetch('/api/auth/sync', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-    } catch (err: any) {
-      console.error('Fout bij inloggen met Google:', err);
-      throw err;
-    }
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+  };
+
+  const signUp = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) throw error;
   };
 
   const signOut = async () => {
-    try {
-      await firebaseSignOut(auth);
-      setUser(null);
-      setToken(null);
-    } catch (err) {
-      console.error('Fout bij uitloggen:', err);
-    }
-  };
-
-  const getAuthHeaders = (): Record<string, string> => {
-    if (!token) return {};
-    return {
-      Authorization: `Bearer ${token}`,
-    };
+    await supabase.auth.signOut();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        token,
-        loading,
-        signInWithGoogle,
-        signOut,
-        getAuthHeaders,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

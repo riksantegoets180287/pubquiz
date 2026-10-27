@@ -31,7 +31,6 @@ import {
   deleteAudioApi,
   updateQuizApi,
 } from '../lib/api.ts';
-import { useAuth } from '../context/AuthContext.tsx';
 
 interface QuizEditorProps {
   quiz: Quiz;
@@ -44,7 +43,6 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
   onRefreshQuiz,
   onStartPresenter,
 }) => {
-  const { getAuthHeaders } = useAuth();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(quiz.title);
   const [description, setDescription] = useState(quiz.description || '');
@@ -55,12 +53,12 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
   const [newRoundTheme, setNewRoundTheme] = useState('');
 
   // Edit round state
-  const [editingRoundId, setEditingRoundId] = useState<number | null>(null);
+  const [editingRoundId, setEditingRoundId] = useState<string | null>(null);
   const [editRoundTitle, setEditRoundTitle] = useState('');
   const [editRoundTheme, setEditRoundTheme] = useState('');
 
   // Add question state
-  const [addQuestionRoundId, setAddQuestionRoundId] = useState<number | null>(null);
+  const [addQuestionRoundId, setAddQuestionRoundId] = useState<string | null>(null);
   const [newQuestionText, setNewQuestionText] = useState('');
   const [newCorrectAnswer, setNewCorrectAnswer] = useState('');
   const [newPoints, setNewPoints] = useState(1);
@@ -92,7 +90,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
   const handleSaveQuizDetails = async () => {
     if (!title.trim()) return;
     try {
-      await updateQuizApi(quiz.id, { title: title.trim(), description: description.trim() }, getAuthHeaders());
+      await updateQuizApi(quiz.id, { title: title.trim(), description: description.trim() });
       setIsEditingTitle(false);
       await onRefreshQuiz();
     } catch (err: any) {
@@ -104,7 +102,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
     e.preventDefault();
     if (!newRoundTitle.trim()) return;
     try {
-      await addRoundApi(quiz.id, newRoundTitle.trim(), newRoundTheme.trim(), getAuthHeaders());
+      await addRoundApi(quiz.id, newRoundTitle.trim(), newRoundTheme.trim());
       setNewRoundTitle('');
       setNewRoundTheme('');
       setShowAddRoundModal(false);
@@ -114,10 +112,10 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
     }
   };
 
-  const handleUpdateRound = async (roundId: number) => {
+  const handleUpdateRound = async (roundId: string) => {
     if (!editRoundTitle.trim()) return;
     try {
-      await updateRoundApi(roundId, { title: editRoundTitle.trim(), theme: editRoundTheme.trim() }, getAuthHeaders());
+      await updateRoundApi(roundId, { title: editRoundTitle.trim(), theme: editRoundTheme.trim() });
       setEditingRoundId(null);
       await onRefreshQuiz();
     } catch (err: any) {
@@ -130,7 +128,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
     setIsDeleting(true);
     setEditorError(null);
     try {
-      await deleteRoundApi(deleteConfirmRound.id, getAuthHeaders());
+      await deleteRoundApi(deleteConfirmRound.id);
       setDeleteConfirmRound(null);
       await onRefreshQuiz();
     } catch (err: any) {
@@ -151,7 +149,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
 
     const roundIds = newRounds.map((r) => r.id);
     try {
-      await reorderRoundsApi(quiz.id, roundIds, getAuthHeaders());
+      await reorderRoundsApi(quiz.id, roundIds);
       await onRefreshQuiz();
     } catch (err: any) {
       alert(err.message || 'Kon volgorde niet bijwerken');
@@ -168,7 +166,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
       let audioFileName: string | undefined = undefined;
 
       if (newAudioFile) {
-        const uploadRes = await uploadAudioApi(newAudioFile, getAuthHeaders());
+        const uploadRes = await uploadAudioApi(newAudioFile);
         audioUrl = uploadRes.audioUrl;
         audioFileName = uploadRes.audioFileName;
       }
@@ -184,8 +182,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
           audioUrl,
           audioFileName,
           audioStartTime,
-        },
-        getAuthHeaders()
+        }
       );
 
       setNewQuestionText('');
@@ -213,7 +210,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
       let audioFileName = editingQuestion.audioFileName;
 
       if (editAudioFile) {
-        const uploadRes = await uploadAudioApi(editAudioFile, getAuthHeaders());
+        const uploadRes = await uploadAudioApi(editAudioFile);
         audioUrl = uploadRes.audioUrl;
         audioFileName = uploadRes.audioFileName;
       }
@@ -229,8 +226,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
           audioUrl,
           audioFileName,
           audioStartTime,
-        },
-        getAuthHeaders()
+        }
       );
 
       setEditingQuestion(null);
@@ -248,7 +244,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
     setIsDeleting(true);
     setEditorError(null);
     try {
-      await deleteQuestionApi(deleteConfirmQuestion.id, getAuthHeaders());
+      await deleteQuestionApi(deleteConfirmQuestion.id);
       setDeleteConfirmQuestion(null);
       await onRefreshQuiz();
     } catch (err: any) {
@@ -264,12 +260,11 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
     setEditorError(null);
     try {
       if (deleteConfirmAudioQuestion.audioFileName) {
-        await deleteAudioApi(deleteConfirmAudioQuestion.audioFileName, getAuthHeaders()).catch(() => {});
+        await deleteAudioApi(deleteConfirmAudioQuestion.audioFileName).catch(() => {});
       }
       await updateQuestionApi(
         deleteConfirmAudioQuestion.id,
-        { audioUrl: null, audioFileName: null },
-        getAuthHeaders()
+        { audioUrl: null, audioFileName: null }
       );
       if (playingAudioUrl === deleteConfirmAudioQuestion.audioUrl) {
         setPlayingAudioUrl(null);
@@ -294,7 +289,7 @@ export const QuizEditor: React.FC<QuizEditorProps> = ({
 
     const qIds = newQuestions.map((q) => q.id);
     try {
-      await reorderQuestionsApi(round.id, qIds, getAuthHeaders());
+      await reorderQuestionsApi(round.id, qIds);
       await onRefreshQuiz();
     } catch (err: any) {
       alert(err.message || 'Kon volgorde niet bijwerken');

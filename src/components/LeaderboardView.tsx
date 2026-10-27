@@ -73,13 +73,13 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
     // Initial alphabetical start seed
     const initialSeed = [...quiz.teams].sort((a, b) => a.name.localeCompare(b.name));
-    const initialRankMap = new Map<number, number>();
+    const initialRankMap = new Map<string, number>();
     initialSeed.forEach((t, idx) => {
       initialRankMap.set(t.id, idx + 1);
     });
 
     // Compute previous standings
-    let prevRankMap = new Map<number, number>();
+    let prevRankMap = new Map<string, number>();
     if (prevRounds.length === 0) {
       // Compare with start seed
       prevRankMap = initialRankMap;
@@ -114,7 +114,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     // Compute current standings
     const currentTotals = quiz.teams.map((team) => {
       let total = 0;
-      const roundPoints: Record<number, number> = {};
+      const roundPoints: Record<string, number> = {};
 
       activeRounds.forEach((r) => {
         const sc = quiz.scores.find((s) => s.teamId === team.id && s.roundId === r.id);

@@ -14,29 +14,28 @@ import {
   createQuizApi,
   deleteQuizApi,
 } from './lib/api.ts';
-import { LogIn, Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, LogIn, Loader2 } from 'lucide-react';
 
 function AppContent() {
-  const { user, loading: authLoading, token, getAuthHeaders, signInWithGoogle } = useAuth();
+  const { user, loading, signIn, signUp, signOut } = useAuth();
   const [quizzes, setQuizzes] = useState<QuizListItem[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<Quiz | null>(null);
-  const [activeQuizId, setActiveQuizId] = useState<number | null>(null);
+  const [activeQuizId, setActiveQuizId] = useState<string | null>(null);
   const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(false);
   const [currentView, setCurrentView] = useState<
     'quizzes' | 'editor' | 'presenter' | 'scores' | 'standings' | 'sheets'
   >('quizzes');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Load quizzes when token is available
   const loadQuizzes = async () => {
-    if (!token) {
+    if (!user) {
       setQuizzes([]);
       return;
     }
     setIsLoadingQuizzes(true);
     setErrorMessage(null);
     try {
-      const data = await fetchQuizzes(getAuthHeaders());
+      const data = await fetchQuizzes();
       setQuizzes(data);
     } catch (err: any) {
       console.error('Failed to load quizzes:', err);
@@ -47,15 +46,16 @@ function AppContent() {
   };
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       loadQuizzes();
+    } else {
+      setQuizzes([]);
     }
-  }, [token]);
+  }, [user]);
 
-  // Load active quiz details when activeQuizId changes
-  const loadActiveQuiz = async (quizId: number) => {
+  const loadActiveQuiz = async (quizId: string) => {
     try {
-      const data = await fetchQuiz(quizId, getAuthHeaders());
+      const data = await fetchQuiz(quizId);
       setActiveQuiz(data);
     } catch (err: any) {
       console.error('Failed to load active quiz:', err);
@@ -72,14 +72,14 @@ function AppContent() {
   }, [activeQuizId]);
 
   const handleCreateQuiz = async (title: string, description: string) => {
-    const newQuiz = await createQuizApi(title, description, getAuthHeaders());
+    const newQuiz = await createQuizApi(title, description);
     await loadQuizzes();
     setActiveQuizId(newQuiz.id);
     setCurrentView('editor');
   };
 
-  const handleDeleteQuiz = async (id: number) => {
-    await deleteQuizApi(id, getAuthHeaders());
+  const handleDeleteQuiz = async (id: string) => {
+    await deleteQuizApi(id);
     if (activeQuizId === id) {
       setActiveQuizId(null);
       setCurrentView('quizzes');
@@ -88,7 +88,7 @@ function AppContent() {
   };
 
   const handleSelectQuiz = (
-    id: number,
+    id: string,
     targetView: 'editor' | 'presenter' | 'scores' | 'standings' | 'sheets' = 'editor'
   ) => {
     setActiveQuizId(id);
@@ -107,64 +107,25 @@ function AppContent() {
     }
   };
 
-  // If user is not signed in
-  if (!authLoading && !user) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
-        <header className="px-6 py-5 border-b border-slate-900 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-sm">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-base font-bold tracking-tight text-white">
-              PubQuiz Master Pro
-            </span>
-          </div>
-
-          <button
-            onClick={signInWithGoogle}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-slate-900 bg-white hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shadow-sm"
-          >
-            <LogIn className="w-4 h-4 text-slate-900" />
-            <span>Inloggen met Google</span>
-          </button>
-        </header>
-
-        <main className="max-w-4xl mx-auto px-4 py-16 text-center my-auto">
-          <div className="w-20 h-20 bg-indigo-950/60 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-indigo-900/60 shadow-xl">
-            <Sparkles className="w-10 h-10" />
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 text-balance">
-            De ultieme live pubquiz bediening voor de presentator
-          </h1>
-
-          <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed text-pretty">
-            Bereid quizrondes en audiofragmenten voor, bedien tijdens de quiz vraag-voor-vraag op je laptop, genereer A4 antwoordbladen en toon de live stand met verschuivingen op de beamer.
-          </p>
-
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-lg mx-auto shadow-2xl">
-            <h2 className="text-base font-bold text-white mb-2">
-              Log in op het beheerdersgedeelte
-            </h2>
-            <p className="text-xs text-slate-400 mb-6">
-              Veilig opgeslagen in je Cloud SQL database. Alleen jij hebt toegang tot jouw quizvragen en antwoorden.
-            </p>
-
-            <button
-              onClick={signInWithGoogle}
-              className="w-full flex items-center justify-center gap-3 px-6 py-3.5 text-sm font-bold text-slate-900 bg-white hover:bg-slate-100 rounded-xl transition-all shadow-md hover:shadow-lg cursor-pointer"
-            >
-              <LogIn className="w-4 h-4 text-slate-900" />
-              <span>Inloggen met Google Account</span>
-            </button>
-          </div>
-        </main>
-
-        <footer className="py-6 text-center text-xs text-slate-600 border-t border-slate-900">
-          PubQuiz Master Pro · Veilig quizbeheer voor presentatoren en nakijkers
-        </footer>
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
+          <p className="text-sm text-slate-400"> Laden...</p>
+        </div>
       </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <AuthScreen
+        onSignIn={signIn}
+        onSignUp={signUp}
+        error={errorMessage}
+        setError={setErrorMessage}
+      />
     );
   }
 
@@ -203,7 +164,7 @@ function AppContent() {
             onSelectQuiz={handleSelectQuiz}
             onDeleteQuiz={handleDeleteQuiz}
             isAuthenticated={!!user}
-            onSignInPrompt={signInWithGoogle}
+            onSignInPrompt={() => {}}
           />
         )}
 
@@ -248,6 +209,151 @@ function AppContent() {
     </div>
   );
 }
+
+interface AuthScreenProps {
+  onSignIn: (email: string, password: string) => Promise<void>;
+  onSignUp: (email: string, password: string) => Promise<void>;
+  error: string | null;
+  setError: (e: string | null) => void;
+}
+
+const AuthScreen: React.FC<AuthScreenProps> = ({ onSignIn, onSignUp, error, setError }) => {
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !password) return;
+    setBusy(true);
+    setLocalError(null);
+    setError(null);
+    try {
+      if (mode === 'signin') {
+        await onSignIn(email.trim(), password);
+      } else {
+        await onSignUp(email.trim(), password);
+      }
+    } catch (err: any) {
+      setLocalError(err.message || 'Er ging iets mis');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const displayError = localError || error;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between">
+      <header className="px-6 py-5 border-b border-slate-900 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-sm">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-base font-bold tracking-tight text-white">
+            PubQuiz Master Pro
+          </span>
+        </div>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-4 py-16 text-center my-auto">
+        <div className="w-20 h-20 bg-indigo-950/60 text-indigo-400 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-indigo-900/60 shadow-xl">
+          <Sparkles className="w-10 h-10" />
+        </div>
+
+        <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4 text-balance">
+          De ultieme live pubquiz bediening voor de presentator
+        </h1>
+
+        <p className="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed text-pretty">
+          Bereid quizrondes en audiofragmenten voor, bedien tijdens de quiz vraag-voor-vraag op je laptop, genereer A4 antwoordbladen en toon de live stand met verschuivingen op de beamer.
+        </p>
+
+        <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 sm:p-8 max-w-md mx-auto shadow-2xl text-left">
+          <h2 className="text-base font-bold text-white mb-2">
+            {mode === 'signin' ? 'Inloggen' : 'Account aanmaken'}
+          </h2>
+          <p className="text-xs text-slate-400 mb-6">
+            {mode === 'signin'
+              ? 'Log in om je quizzen te beheren.'
+              : 'Maak een account aan om je quizzen veilig op te slaan.'}
+          </p>
+
+          {displayError && (
+            <div className="mb-4 p-3 rounded-xl bg-rose-950/60 border border-rose-900 text-rose-200 text-xs flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{displayError}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                E-mailadres
+              </label>
+              <input
+                type="email"
+                required
+                placeholder="jij@voorbeeld.nl"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">
+                Wachtwoord
+              </label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Minimaal 6 tekens"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3.5 py-2.5 text-sm bg-slate-800 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={busy || !email.trim() || !password}
+              className="w-full flex items-center justify-center gap-3 px-6 py-3 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-xl transition-all shadow-md cursor-pointer"
+            >
+              {busy ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <LogIn className="w-4 h-4" />
+              )}
+              <span>{mode === 'signin' ? 'Inloggen' : 'Account aanmaken'}</span>
+            </button>
+          </form>
+
+          <button
+            onClick={() => {
+              setMode(mode === 'signin' ? 'signup' : 'signin');
+              setLocalError(null);
+              setError(null);
+            }}
+            className="w-full mt-4 text-xs text-slate-400 hover:text-indigo-400 transition-colors cursor-pointer"
+          >
+            {mode === 'signin'
+              ? 'Nog geen account? Maak er een aan'
+              : 'Al een account? Log in'}
+          </button>
+        </div>
+      </main>
+
+      <footer className="py-6 text-center text-xs text-slate-600 border-t border-slate-900">
+        PubQuiz Master Pro · Veilig quizbeheer voor presentatoren en nakijkers
+      </footer>
+    </div>
+  );
+};
 
 export default function App() {
   return (

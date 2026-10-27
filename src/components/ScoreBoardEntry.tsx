@@ -18,7 +18,6 @@ import {
   deleteTeamApi,
   saveRoundScoresApi,
 } from '../lib/api.ts';
-import { useAuth } from '../context/AuthContext.tsx';
 
 interface ScoreBoardEntryProps {
   quiz: Quiz;
@@ -31,15 +30,12 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
   onRefreshQuiz,
   onGoToStandings,
 }) => {
-  const { getAuthHeaders } = useAuth();
-
-  // Active round being scored
-  const [selectedRoundId, setSelectedRoundId] = useState<number>(
-    quiz.rounds[0]?.id || 0
+  const [selectedRoundId, setSelectedRoundId] = useState<string>(
+    quiz.rounds[0]?.id || ''
   );
 
   // Score matrix state: teamId -> roundId -> points string
-  const [matrixScores, setMatrixScores] = useState<Record<number, Record<number, string>>>({});
+  const [matrixScores, setMatrixScores] = useState<Record<string, Record<string, string>>>({});
 
   // Team management modal / state
   const [showAddTeamModal, setShowAddTeamModal] = useState(false);
@@ -52,14 +48,14 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
 
   // Confirmation modal state
-  const [confirmRoundId, setConfirmRoundId] = useState<number | null>(null);
+  const [confirmRoundId, setConfirmRoundId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [saveSuccessMessage, setSaveSuccessMessage] = useState<string | null>(null);
 
   // Initialize matrix scores from quiz data
   useEffect(() => {
-    const scoresMap: Record<number, Record<number, string>> = {};
+    const scoresMap: Record<string, Record<string, string>> = {};
 
     // Initialize all teams and rounds
     quiz.teams.forEach((team) => {
@@ -83,7 +79,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     }
   }, [quiz]);
 
-  const handleScoreChange = (teamId: number, roundId: number, value: string) => {
+  const handleScoreChange = (teamId: string, roundId: string, value: string) => {
     setValidationError(null);
     setSaveSuccessMessage(null);
     setMatrixScores((prev) => ({
@@ -95,7 +91,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     }));
   };
 
-  const calculateTeamTotal = (teamId: number) => {
+  const calculateTeamTotal = (teamId: string) => {
     let total = 0;
     const teamScores = matrixScores[teamId];
     if (!teamScores) return 0;
@@ -110,7 +106,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     return total;
   };
 
-  const handlePromptSaveRound = (roundId: number) => {
+  const handlePromptSaveRound = (roundId: string) => {
     setValidationError(null);
     setSaveSuccessMessage(null);
 
@@ -145,7 +141,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
         };
       });
 
-      await saveRoundScoresApi(quiz.id, confirmRoundId, teamScores, getAuthHeaders());
+      await saveRoundScoresApi(quiz.id, confirmRoundId, teamScores);
       await onRefreshQuiz();
 
       const roundObj = quiz.rounds.find((r) => r.id === confirmRoundId);
@@ -162,7 +158,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     e.preventDefault();
     if (!newTeamName.trim()) return;
     try {
-      await addTeamApi(quiz.id, newTeamName.trim(), newTableNumber.trim(), getAuthHeaders());
+      await addTeamApi(quiz.id, newTeamName.trim(), newTableNumber.trim());
       setNewTeamName('');
       setNewTableNumber('');
       setShowAddTeamModal(false);
@@ -176,7 +172,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     e.preventDefault();
     if (!editingTeam || !editTeamName.trim()) return;
     try {
-      await updateTeamApi(editingTeam.id, editTeamName.trim(), editTableNumber.trim(), getAuthHeaders());
+      await updateTeamApi(editingTeam.id, editTeamName.trim(), editTableNumber.trim());
       setEditingTeam(null);
       await onRefreshQuiz();
     } catch (err: any) {
@@ -189,7 +185,7 @@ export const ScoreBoardEntry: React.FC<ScoreBoardEntryProps> = ({
     setIsDeletingTeam(true);
     setValidationError(null);
     try {
-      await deleteTeamApi(deleteConfirmTeam.id, getAuthHeaders());
+      await deleteTeamApi(deleteConfirmTeam.id);
       setDeleteConfirmTeam(null);
       await onRefreshQuiz();
     } catch (err: any) {

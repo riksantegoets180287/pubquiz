@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext.tsx';
 import {
   HelpCircle,
   LogOut,
-  LogIn,
   ListOrdered,
   MonitorPlay,
   Calculator,
@@ -26,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeQuiz,
   onBackToQuizzes,
 }) => {
-  const { user, signInWithGoogle, signOut, loading } = useAuth();
+  const { user, signOut, loading } = useAuth();
 
   return (
     <header className="no-print bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-40">
@@ -136,21 +135,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="w-6 h-6 border-2 border-slate-600 border-t-white rounded-full animate-spin" />
           ) : user ? (
             <div className="flex items-center gap-2.5">
-              {user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt={user.displayName || 'Beheerder'}
-                  className="w-8 h-8 rounded-full border border-slate-700 object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">
-                  {user.email?.charAt(0).toUpperCase() || 'P'}
-                </div>
-              )}
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-semibold text-slate-200">
+                {user.email?.charAt(0).toUpperCase() || 'P'}
+              </div>
               <div className="hidden lg:block text-left">
                 <p className="text-xs font-medium text-slate-200 truncate max-w-[120px]">
-                  {user.displayName || user.email?.split('@')[0]}
+                  {user.email?.split('@')[0]}
                 </p>
                 <p className="text-[10px] text-slate-400">Presentator</p>
               </div>
@@ -162,15 +152,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
-          ) : (
-            <button
-              onClick={signInWithGoogle}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-900 bg-white hover:bg-slate-100 rounded-lg transition-colors shadow-sm cursor-pointer whitespace-nowrap"
-            >
-              <LogIn className="w-3.5 h-3.5 text-slate-900" />
-              <span>Inloggen met Google</span>
-            </button>
-          )}
+          ) : null}
         </div>
       </div>
 

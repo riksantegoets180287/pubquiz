@@ -16,8 +16,8 @@ interface QuizListProps {
   quizzes: QuizListItem[];
   isLoading: boolean;
   onCreateQuiz: (title: string, description: string) => Promise<void>;
-  onSelectQuiz: (id: number, targetView?: 'editor' | 'presenter' | 'scores' | 'standings' | 'sheets') => void;
-  onDeleteQuiz: (id: number) => Promise<void>;
+  onSelectQuiz: (id: string, targetView?: 'editor' | 'presenter' | 'scores' | 'standings' | 'sheets') => void;
+  onDeleteQuiz: (id: string) => Promise<void>;
   isAuthenticated: boolean;
   onSignInPrompt: () => void;
 }
@@ -35,7 +35,7 @@ export const QuizList: React.FC<QuizListProps> = ({
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +53,7 @@ export const QuizList: React.FC<QuizListProps> = ({
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
       await onDeleteQuiz(id);
       setDeleteConfirmId(null);

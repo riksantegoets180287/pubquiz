@@ -1,13 +1,13 @@
 export interface UserProfile {
-  id: number;
+  id: string;
   uid: string;
   email: string;
   displayName?: string | null;
 }
 
 export interface Question {
-  id: number;
-  roundId: number;
+  id: string;
+  roundId: string;
   questionNumber: number;
   questionText: string;
   correctAnswer: string;
@@ -20,8 +20,8 @@ export interface Question {
 }
 
 export interface Round {
-  id: number;
-  quizId: number;
+  id: string;
+  quizId: string;
   roundNumber: number;
   title: string;
   theme?: string | null;
@@ -32,25 +32,25 @@ export interface Round {
 }
 
 export interface Team {
-  id: number;
-  quizId: number;
+  id: string;
+  quizId: string;
   name: string;
   tableNumber?: string | null;
   createdAt?: string;
 }
 
 export interface Score {
-  id: number;
-  quizId: number;
-  roundId: number;
-  teamId: number;
+  id: string;
+  quizId: string;
+  roundId: string;
+  teamId: string;
   points: number;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Quiz {
-  id: number;
+  id: string;
   userId: string;
   title: string;
   description?: string | null;
@@ -64,7 +64,7 @@ export interface Quiz {
 }
 
 export interface QuizListItem {
-  id: number;
+  id: string;
   userId: string;
   title: string;
   description?: string | null;
@@ -78,12 +78,12 @@ export interface QuizListItem {
 }
 
 export interface TeamStanding {
-  teamId: number;
+  teamId: string;
   teamName: string;
   tableNumber?: string | null;
   totalPoints: number;
   currentRank: number;
   previousRank: number;
-  rankDelta: number; // >0: climbed, <0: fell, 0: same
-  roundPoints: Record<number, number>; // roundId -> points
+  rankDelta: number;
+  roundPoints: Record<string, number>;
 }
