@@ -1,0 +1,6 @@
+{
+  "name": "PubQuiz Master Pro",
+  "description": "Complete webapp voor pubquiz presentatoren: beheer quizzen, speel audio af, voer scores in, genereer printklare A4 antwoordbladen en toon live standen.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
